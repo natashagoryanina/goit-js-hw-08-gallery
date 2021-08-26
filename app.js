@@ -64,25 +64,87 @@ const galleryItems = [
   },
 ];
 
-console.log(createGalleryItem(galleryItems));
+const refs = {
+  imagesContainer: document.querySelector('.js-gallery'),
+  gallery: document.querySelector('ul.js-gallery'),
+  modalWindow: document.querySelector('div.lightbox'),
+  lightboxImg: document.querySelector('img.lightbox__image'),
+  closeBtn: document.querySelector('button[data-action="close-lightbox"]'),
+  lightboxOverlay: document.querySelector('div.lightbox__overlay'),
+};
+
+const imagesMarkup = createGalleryItem(galleryItems);
+
+refs.imagesContainer.insertAdjacentHTML('beforeend', imagesMarkup);
+
+refs.gallery.addEventListener('click', onOpenModal);
+refs.closeBtn.addEventListener('click', onCloseModal);
+refs.lightboxOverlay.addEventListener('click', onCloseModal);
 
 function createGalleryItem(images) {
-    const markup = images.map(({preview, original, description}) => {
-        return `
-        <li class="gallery__item">
-            <a
-                class="gallery__link"
-                href="${original}" 
-            >
-                <img
-                    class="gallery__image"
-                    src="${preview}"
-                    data-source="${original}"
-                    alt="${description}"
-                />
-            </a>
-        </li>
-        `;
-        console.log(markup);
-    });
+  return images.map(({preview, original, description}) => {
+    return `
+      <li class="gallery__item">
+        <a
+          class="gallery__link"
+          href="${original}" 
+        >
+          <img
+            class="gallery__image"
+            src="${preview}"
+            data-source="${original}"
+            alt="${description}"
+          />
+        </a>
+      </li>
+    `;
+  }).join(' ');
 }
+
+function onOpenModal(e) {
+  e.preventDefault();
+  window.addEventListener('keydown', onEscKeyPress);
+  window.addEventListener('keydown', onArrowPress);
+  const currentImg = e.target;
+  const modalImg = currentImg.getAttribute('data-source');
+  refs.modalWindow.classList.add('is-open');
+  refs.lightboxImg.src = modalImg;
+};
+
+function onCloseModal(e) {
+  window.removeEventListener('keydown', onEscKeyPress);
+  window.removeEventListener('keydown', onArrowPress);
+  refs.modalWindow.classList.remove('is-open');
+  refs.lightboxImg.src = '';
+};
+
+function onEscKeyPress(e) {
+  const isEscCode = e.code === 'Escape';
+  if (isEscCode) {
+    onCloseModal();
+  }
+};
+
+const galleryLinkArr = refs.gallery.querySelectorAll('a.gallery__link');
+
+function onArrowPress(e) {
+  const isArrowRightCode = e.code === 'ArrowRight';
+  const isArrowLeftCode = e.code === 'ArrowLeft';
+  if (isArrowRightCode) {
+    for (let i = 0; i < galleryLinkArr.length; i++) {
+      if (galleryLinkArr[i].href === refs.lightboxImg.src && galleryLinkArr[galleryLinkArr.length-1].href !== refs.lightboxImg.src) {
+        refs.lightboxImg.src = galleryLinkArr[i + 1].href;
+        return;
+      }
+    }
+  }
+  if (isArrowLeftCode) {
+    for (let i = 0; i < galleryLinkArr.length; i++) {
+      if (galleryLinkArr[i].href === refs.lightboxImg.src && galleryLinkArr[0].href !== refs.lightboxImg.src) {
+        refs.lightboxImg.src = galleryLinkArr[i - 1].href;
+        return;
+      }
+    }
+  }
+};
+
